@@ -32,25 +32,16 @@ document.body.appendChild(shadowPlane.maskCanvas);
 const vision = new VisionPipeline();
 let currentHead = { x: 0, y: 0, z: 2.8 };
 
-async function start() {
-  await vision.init();
+// Initialize default camera view immediately
+offAxisCam.updateFrustum(currentHead.x, currentHead.y, currentHead.z);
 
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { width: 640, height: 480 }
-  });
-  video.srcObject = stream;
-  await video.play();
-
-  requestAnimationFrame(loop);
-}
-
+// Animation Loop (starts immediately)
 function loop(timestamp: number) {
   requestAnimationFrame(loop);
 
-  if (video.readyState >= 2) {
+  if (video.readyState >= 2 && vision.isReady) {
     const head = vision.getHeadPosition(video, timestamp);
     if (head) {
-      // Invert X so moving left physically moves your perspective left
       const targetX = -head.x * 2.0;
       const targetY = head.y * 1.5;
       const targetZ = 2.8 + (head.z || 0) * 2.5;
@@ -67,10 +58,25 @@ function loop(timestamp: number) {
 
   renderer.render(sceneManager.scene, offAxisCam.camera);
 }
+requestAnimationFrame(loop);
+
+async function start() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480 }
+    });
+    video.srcObject = stream;
+    await video.play();
+
+    await vision.init();
+  } catch (err) {
+    console.error('Initialization error:', err);
+  }
+}
 
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   offAxisCam.updateFrustum(currentHead.x, currentHead.y, currentHead.z);
 });
 
-start().catch(console.error);
+start();
