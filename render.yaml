@@ -1,0 +1,6 @@
+﻿services:
+  - type: web
+    name: shadow-window-portal
+    env: static
+    buildCommand: npm run build
+    staticPublishPath: dist
