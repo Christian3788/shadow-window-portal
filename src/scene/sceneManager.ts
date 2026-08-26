@@ -7,78 +7,88 @@ export class SceneManager {
   constructor() {
     this.scene = new THREE.Scene();
 
-    // Soft ambient fill
-    const ambient = new THREE.AmbientLight(0xffffff, 0.45);
+    // Studio Ambient Light
+    const ambient = new THREE.AmbientLight(0xdce0e6, 0.6);
     this.scene.add(ambient);
 
-    // Powerful projector spotlight behind the user casting toward the back wall
-    this.spotLight = new THREE.SpotLight(0xffffff, 25.0);
-    this.spotLight.position.set(0, 1.0, 3.8);
-    this.spotLight.target.position.set(0, -0.4, -4.5);
-    this.spotLight.angle = Math.PI / 3.0;
-    this.spotLight.penumbra = 0.35;
+    // Dynamic Shadow Projector Light
+    this.spotLight = new THREE.SpotLight(0xffffff, 30.0);
+    this.spotLight.position.set(0, 1.2, 4.0);
+    this.spotLight.target.position.set(0, -0.2, -4.0);
+    this.spotLight.angle = Math.PI / 2.6;
+    this.spotLight.penumbra = 0.5;
     this.spotLight.castShadow = true;
     this.spotLight.shadow.mapSize.width = 2048;
     this.spotLight.shadow.mapSize.height = 2048;
-    this.spotLight.shadow.camera.near = 0.5;
+    this.spotLight.shadow.camera.near = 0.2;
     this.spotLight.shadow.camera.far = 15;
     this.spotLight.shadow.bias = -0.0001;
-    this.spotLight.shadow.radius = 2; // Soft edges
+    this.spotLight.shadow.radius = 3;
     this.scene.add(this.spotLight);
     this.scene.add(this.spotLight.target);
 
-    this.createRoom();
+    this.buildShowroom();
   }
 
-  private createRoom() {
-    // High-diffuse light grey room walls for clear shadow projection
-    const roomGeo = new THREE.BoxGeometry(11, 7, 12);
-    const roomMat = new THREE.MeshStandardMaterial({
-      color: 0xd6d8dc,
-      roughness: 0.6,
-      metalness: 0.05,
-      side: THREE.BackSide,
+  private buildShowroom() {
+    const clayMaterial = new THREE.MeshStandardMaterial({
+      color: 0xc8cbd0,
+      roughness: 0.75,
+      metalness: 0.1,
     });
-    const room = new THREE.Mesh(roomGeo, roomMat);
-    room.position.set(0, 0.2, -3);
+
+    // Room Envelope
+    const room = new THREE.Mesh(
+      new THREE.BoxGeometry(12, 7, 14),
+      new THREE.MeshStandardMaterial({
+        color: 0xbfc3cb,
+        roughness: 0.8,
+        side: THREE.BackSide,
+      })
+    );
+    room.position.set(0, 0.5, -3);
     room.receiveShadow = true;
     this.scene.add(room);
 
     // Floor Grid
-    const grid = new THREE.GridHelper(11, 14, 0x888899, 0xb0b4bc);
-    grid.position.set(0, -3.29, -3);
+    const grid = new THREE.GridHelper(12, 16, 0x8d929b, 0xaeb2ba);
+    grid.position.set(0, -2.98, -3);
     this.scene.add(grid);
 
-    // Center focal prop (metallic car-styled form)
-    const knotGeo = new THREE.TorusKnotGeometry(0.55, 0.18, 128, 32);
-    const knotMat = new THREE.MeshStandardMaterial({
-      color: 0x222222,
-      roughness: 0.2,
-      metalness: 0.85,
+    // Left Prop: Stylized Car Geometry
+    const carGroup = new THREE.Group();
+    const carBody = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.6, 1.6), clayMaterial);
+    carBody.position.y = 0.3;
+    const carCabin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 1.3), clayMaterial);
+    carCabin.position.set(-0.2, 0.75, 0);
+    const carSpoiler = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 1.5), clayMaterial);
+    carSpoiler.position.set(1.3, 0.7, 0);
+
+    carGroup.add(carBody, carCabin, carSpoiler);
+    carGroup.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
     });
-    const knot = new THREE.Mesh(knotGeo, knotMat);
-    knot.position.set(0, -0.8, -2.2);
-    knot.castShadow = true;
-    knot.receiveShadow = true;
-    this.scene.add(knot);
+    carGroup.position.set(-2.2, -2.7, -3.2);
+    carGroup.rotation.y = Math.PI * 0.12;
+    this.scene.add(carGroup);
 
-    // Flanking Pillars
-    const pillarGeo = new THREE.CylinderGeometry(0.32, 0.32, 4.5, 32);
-    const pillarMat = new THREE.MeshStandardMaterial({
-      color: 0x999da6,
-      roughness: 0.5,
-    });
+    // Right Prop: Pedestal with Sculpture
+    const pedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 1.6, 32), clayMaterial);
+    pedestal.position.set(2.4, -2.2, -3.0);
+    pedestal.castShadow = true;
+    pedestal.receiveShadow = true;
 
-    const left = new THREE.Mesh(pillarGeo, pillarMat);
-    left.position.set(-3.0, -1.0, -2.5);
-    left.castShadow = true;
-    left.receiveShadow = true;
-    this.scene.add(left);
+    const sculpture = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(0.65),
+      new THREE.MeshStandardMaterial({ color: 0x3a3d44, roughness: 0.3, metalness: 0.5 })
+    );
+    sculpture.position.set(2.4, -1.0, -3.0);
+    sculpture.castShadow = true;
+    sculpture.receiveShadow = true;
 
-    const right = new THREE.Mesh(pillarGeo, pillarMat);
-    right.position.set(3.0, -1.0, -2.5);
-    right.castShadow = true;
-    right.receiveShadow = true;
-    this.scene.add(right);
+    this.scene.add(pedestal, sculpture);
   }
 }

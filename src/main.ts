@@ -18,7 +18,7 @@ const offAxisCam = new OffAxisCamera();
 const shadowPlane = new ShadowPlane();
 sceneManager.scene.add(shadowPlane.mesh);
 
-// Attach segmentation canvas to bottom-right corner for live feedback
+// Debug PIP
 shadowPlane.maskCanvas.style.position = 'fixed';
 shadowPlane.maskCanvas.style.bottom = '16px';
 shadowPlane.maskCanvas.style.right = '16px';
@@ -48,12 +48,14 @@ function loop(timestamp: number) {
       currentHead.y += (targetY - currentHead.y) * 0.12;
       currentHead.z += (targetZ - currentHead.z) * 0.12;
 
-      // Update camera frustum
+      // Update camera portal view
       offAxisCam.updateFrustum(currentHead.x, currentHead.y, currentHead.z);
 
-      // Move shadow caster plane with viewer
-      shadowPlane.mesh.position.x = currentHead.x * 0.45;
-      shadowPlane.mesh.position.y = currentHead.y * 0.45 - 0.2;
+      // Move shadow plane and spotlight in tandem
+      shadowPlane.mesh.position.x = currentHead.x * 0.5;
+      shadowPlane.mesh.position.y = currentHead.y * 0.5 - 0.2;
+      sceneManager.spotLight.position.x = currentHead.x * 0.6;
+      sceneManager.spotLight.position.y = currentHead.y * 0.6 + 1.2;
     }
 
     vision.segmentSilhouette(video, timestamp, shadowPlane.maskCanvas);
@@ -66,12 +68,9 @@ requestAnimationFrame(loop);
 
 async function start() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: 640, height: 480 }
-    });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
     video.srcObject = stream;
     await video.play();
-
     await vision.init();
   } catch (err) {
     console.error('Initialization error:', err);

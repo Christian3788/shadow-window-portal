@@ -1,8 +1,4 @@
-import {
-  FilesetResolver,
-  FaceLandmarker,
-  ImageSegmenter
-} from '@mediapipe/tasks-vision';
+import { FilesetResolver, FaceLandmarker, ImageSegmenter } from '@mediapipe/tasks-vision';
 
 export class VisionPipeline {
   private faceLandmarker!: FaceLandmarker;
@@ -30,12 +26,13 @@ export class VisionPipeline {
           delegate: 'CPU'
         },
         runningMode: 'VIDEO',
-        outputCategoryMask: true
+        outputCategoryMask: false,
+        outputConfidenceMasks: true
       });
 
       this.isReady = true;
     } catch (err) {
-      console.error('Failed to initialize MediaPipe vision models:', err);
+      console.error('MediaPipe initialization error:', err);
     }
   }
 
@@ -60,10 +57,9 @@ export class VisionPipeline {
     if (!this.isReady || video.readyState < 2) return;
     try {
       this.segmenter.segmentForVideo(video, timestamp, (result) => {
-        const mask = result.categoryMask;
-        if (!mask) return;
+        if (!result.confidenceMasks || result.confidenceMasks.length === 0) return;
+        const mask = result.confidenceMasks[0];
 
-        // Auto-match target canvas size to mask dimensions
         if (targetCanvas.width !== mask.width || targetCanvas.height !== mask.height) {
           targetCanvas.width = mask.width;
           targetCanvas.height = mask.height;
@@ -72,23 +68,22 @@ export class VisionPipeline {
         const ctx = targetCanvas.getContext('2d');
         if (!ctx) return;
 
-        const maskData = mask.getAsUint8Array();
+        const maskFloats = mask.getAsFloat32Array();
         const imgData = ctx.createImageData(mask.width, mask.height);
 
-        for (let i = 0; i < maskData.length; i++) {
-          const val = maskData[i];
-          // Person confidence / category mask index
-          const isPerson = val > 0 || val === 255;
+        // Feathered alpha gradient mapping
+        for (let i = 0; i < maskFloats.length; i++) {
+          const confidence = maskFloats[i]; // 0.0 to 1.0
           const idx = i * 4;
           imgData.data[idx] = 255;
           imgData.data[idx + 1] = 255;
           imgData.data[idx + 2] = 255;
-          imgData.data[idx + 3] = isPerson ? 255 : 0;
+          imgData.data[idx + 3] = Math.round(confidence * 255);
         }
         ctx.putImageData(imgData, 0, 0);
       });
     } catch {
-      // drop frame silently
+      // drop dropped frame
     }
   }
 }
