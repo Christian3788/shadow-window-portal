@@ -32,24 +32,28 @@ document.body.appendChild(shadowPlane.maskCanvas);
 const vision = new VisionPipeline();
 let currentHead = { x: 0, y: 0, z: 2.8 };
 
-// Initialize default camera view immediately
 offAxisCam.updateFrustum(currentHead.x, currentHead.y, currentHead.z);
 
-// Animation Loop (starts immediately)
 function loop(timestamp: number) {
   requestAnimationFrame(loop);
 
   if (video.readyState >= 2 && vision.isReady) {
     const head = vision.getHeadPosition(video, timestamp);
     if (head) {
-      const targetX = -head.x * 2.0;
+      const targetX = -head.x * 2.2;
       const targetY = head.y * 1.5;
       const targetZ = 2.8 + (head.z || 0) * 2.5;
 
       currentHead.x += (targetX - currentHead.x) * 0.12;
       currentHead.y += (targetY - currentHead.y) * 0.12;
       currentHead.z += (targetZ - currentHead.z) * 0.12;
+
+      // Update camera frustum
       offAxisCam.updateFrustum(currentHead.x, currentHead.y, currentHead.z);
+
+      // Move shadow caster plane with viewer
+      shadowPlane.mesh.position.x = currentHead.x * 0.45;
+      shadowPlane.mesh.position.y = currentHead.y * 0.45 - 0.2;
     }
 
     vision.segmentSilhouette(video, timestamp, shadowPlane.maskCanvas);
