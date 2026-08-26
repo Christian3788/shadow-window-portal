@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shadow Window Portal</title>
+    <style>
+      body { margin: 0; overflow: hidden; background: #000; }
+      #webcam { display: none; }
+      canvas { width: 100vw; height: 100vh; display: block; }
+    </style>
+  </head>
+  <body>
+    <video id="webcam" autoplay playsinline></video>
+    <canvas id="webgl-canvas"></canvas>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
