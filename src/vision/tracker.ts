@@ -15,7 +15,6 @@ export class VisionPipeline {
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
       );
 
-      // Using CPU delegate ensures reliability across all browsers/GPU configs
       this.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
         baseOptions: {
           modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
@@ -35,7 +34,6 @@ export class VisionPipeline {
       });
 
       this.isReady = true;
-      console.log('MediaPipe models loaded successfully.');
     } catch (err) {
       console.error('Failed to initialize MediaPipe vision models:', err);
     }
@@ -65,6 +63,12 @@ export class VisionPipeline {
         const mask = result.categoryMask;
         if (!mask) return;
 
+        // Auto-match target canvas size to mask dimensions
+        if (targetCanvas.width !== mask.width || targetCanvas.height !== mask.height) {
+          targetCanvas.width = mask.width;
+          targetCanvas.height = mask.height;
+        }
+
         const ctx = targetCanvas.getContext('2d');
         if (!ctx) return;
 
@@ -72,7 +76,9 @@ export class VisionPipeline {
         const imgData = ctx.createImageData(mask.width, mask.height);
 
         for (let i = 0; i < maskData.length; i++) {
-          const isPerson = maskData[i] === 0;
+          const val = maskData[i];
+          // Person confidence / category mask index
+          const isPerson = val > 0 || val === 255;
           const idx = i * 4;
           imgData.data[idx] = 255;
           imgData.data[idx + 1] = 255;
@@ -82,7 +88,7 @@ export class VisionPipeline {
         ctx.putImageData(imgData, 0, 0);
       });
     } catch {
-      // Skip dropped frame during processing
+      // drop frame silently
     }
   }
 }

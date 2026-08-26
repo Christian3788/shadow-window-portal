@@ -7,22 +7,21 @@ export class SceneManager {
   constructor() {
     this.scene = new THREE.Scene();
 
-    // Brighter ambient light to see the room structure
-    const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+    const ambient = new THREE.AmbientLight(0xffffff, 0.4);
     this.scene.add(ambient);
 
-    // Primary projector spotlight positioned behind the user
-    this.spotLight = new THREE.SpotLight(0xfff5e6, 8.0);
-    this.spotLight.position.set(0, 1.5, 3.5);
-    this.spotLight.target.position.set(0, 0, -3.0);
-    this.spotLight.angle = Math.PI / 2.8;
-    this.spotLight.penumbra = 0.4;
+    // Projector light behind the user casting forward
+    this.spotLight = new THREE.SpotLight(0xffeedd, 9.0);
+    this.spotLight.position.set(0, 1.2, 3.2);
+    this.spotLight.target.position.set(0, -0.5, -4.0);
+    this.spotLight.angle = Math.PI / 2.5;
+    this.spotLight.penumbra = 0.2;
     this.spotLight.castShadow = true;
     this.spotLight.shadow.mapSize.width = 2048;
     this.spotLight.shadow.mapSize.height = 2048;
     this.spotLight.shadow.camera.near = 0.5;
     this.spotLight.shadow.camera.far = 15;
-    this.spotLight.shadow.bias = -0.0005;
+    this.spotLight.shadow.bias = -0.0002;
     this.scene.add(this.spotLight);
     this.scene.add(this.spotLight.target);
 
@@ -30,10 +29,10 @@ export class SceneManager {
   }
 
   private createRoom() {
-    // Inverted Room Box (Walls, Floor, Ceiling)
+    // Room shell
     const roomGeo = new THREE.BoxGeometry(10, 6, 12);
     const roomMat = new THREE.MeshStandardMaterial({
-      color: 0x777785,
+      color: 0x5a5d64,
       roughness: 0.8,
       metalness: 0.1,
       side: THREE.BackSide,
@@ -43,38 +42,38 @@ export class SceneManager {
     room.receiveShadow = true;
     this.scene.add(room);
 
-    // Grid on floor for extra depth perception
-    const grid = new THREE.GridHelper(10, 10, 0x333333, 0x555555);
+    // Floor Grid
+    const grid = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
     grid.position.set(0, -2.99, -3);
     this.scene.add(grid);
 
-    // Center prop (resembling the car/object placement in the video)
-    const centerGeo = new THREE.TorusKnotGeometry(0.7, 0.25, 128, 32);
-    const centerMat = new THREE.MeshStandardMaterial({
-      color: 0xe05638,
-      roughness: 0.3,
-      metalness: 0.4
+    // Main Showcase Model
+    const knotGeo = new THREE.TorusKnotGeometry(0.55, 0.18, 128, 32);
+    const knotMat = new THREE.MeshStandardMaterial({
+      color: 0xb53b23,
+      roughness: 0.25,
+      metalness: 0.6,
     });
-    const centerMesh = new THREE.Mesh(centerGeo, centerMat);
-    centerMesh.position.set(0, -0.5, -3.5);
-    centerMesh.castShadow = true;
-    centerMesh.receiveShadow = true;
-    this.scene.add(centerMesh);
+    const knot = new THREE.Mesh(knotGeo, knotMat);
+    knot.position.set(0, -0.6, -2.5);
+    knot.castShadow = true;
+    knot.receiveShadow = true;
+    this.scene.add(knot);
 
-    // Side Pillars
-    const pillarGeo = new THREE.CylinderGeometry(0.35, 0.35, 4, 32);
-    const pillarMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, roughness: 0.5 });
+    // Flanking Props
+    const pillarGeo = new THREE.CylinderGeometry(0.3, 0.3, 3.5, 32);
+    const pillarMat = new THREE.MeshStandardMaterial({ color: 0x888890, roughness: 0.6 });
 
-    const leftPillar = new THREE.Mesh(pillarGeo, pillarMat);
-    leftPillar.position.set(-2.5, -1.0, -3.0);
-    leftPillar.castShadow = true;
-    leftPillar.receiveShadow = true;
-    this.scene.add(leftPillar);
+    const left = new THREE.Mesh(pillarGeo, pillarMat);
+    left.position.set(-2.8, -1.25, -2.8);
+    left.castShadow = true;
+    left.receiveShadow = true;
+    this.scene.add(left);
 
-    const rightPillar = new THREE.Mesh(pillarGeo, pillarMat);
-    rightPillar.position.set(2.5, -1.0, -3.0);
-    rightPillar.castShadow = true;
-    rightPillar.receiveShadow = true;
-    this.scene.add(rightPillar);
+    const right = new THREE.Mesh(pillarGeo, pillarMat);
+    right.position.set(2.8, -1.25, -2.8);
+    right.castShadow = true;
+    right.receiveShadow = true;
+    this.scene.add(right);
   }
 }
